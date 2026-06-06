@@ -1,0 +1,15 @@
+{
+  "name": "stash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Point at your pile. Watch it sell. — an autopilot recommerce shopkeeper.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@fontsource/gelasio": "^5.1.0",
+    "@fontsource/inconsolata": "^5.1.0",
