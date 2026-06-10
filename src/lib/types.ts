@@ -85,3 +85,62 @@ export interface LedgerEntry {
 }
 
 export type MsgRole = "buyer" | "qm" | "system";
+export interface Message {
+  role: MsgRole;
+  text: string;
+  ts: number;
+  amount?: number | null;
+}
+export type ThreadStatus = "open" | "accepted" | "declined" | "walked" | "closed";
+export interface Thread {
+  id: string;
+  itemId: string;
+  shopSlug: string;
+  buyer: string;
+  status: ThreadStatus;
+  messages: Message[];
+  draft?: { text: string; move: "counter" | "accept" | "decline"; amount: number | null; why: string } | null;
+  agreedPrice?: number;
+  rounds: number;
+  createdAt: number;
+}
+
+export interface Settings {
+  reserveFloorPct: number; // 0.60..1.00 of appraised low
+  neverBelowReserve: true; // locked on
+  autoAcceptPct: number | null; // null = off; else 0.90..1.00 of asking
+  rounding: "none" | "5" | "9";
+  tone: number; // 0 (friendly) .. 1 (firm)
+  maxRounds: number; // 1..6
+  openingCounterBias: number; // 0..1 (meet halfway .. hold near asking)
+  suggestBundles: boolean;
+  ignoreLowballPct: number | null; // null = off
+  prohibitedExtra: string[]; // owner's own "never list" keywords
+  askWhenUnsure: boolean;
+  channel: "shop" | "telegram" | "email";
+  quietHours: { on: boolean; from: string; to: string };
+  exportPacks: boolean;
+  ebayConnected: boolean;
+  showFound: boolean;
+  demoOn: boolean;
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  reserveFloorPct: 0.85,
+  neverBelowReserve: true,
+  autoAcceptPct: null,
+  rounding: "5",
+  tone: 0.55,
+  maxRounds: 3,
+  openingCounterBias: 0.6,
+  suggestBundles: true,
+  ignoreLowballPct: null,
+  prohibitedExtra: [],
+  askWhenUnsure: true,
+  channel: "shop",
+  quietHours: { on: false, from: "22:00", to: "08:00" },
+  exportPacks: true,
+  ebayConnected: false,
+  showFound: true,
+  demoOn: false,
+};
