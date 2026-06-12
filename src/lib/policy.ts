@@ -44,3 +44,35 @@ export function classifyProhibited(
     if (term.length > 1 && t.includes(term)) return { blocked: true, reason: `your “never list”: ${e.trim()}`, category: "owner" };
   }
   return { blocked: false };
+}
+
+// ---- offer gating ----
+export interface OfferGate {
+  belowReserve: boolean;
+  autoAccept: boolean; // owner allowed a near-full offer to just sell
+  ignoreLowball: boolean; // true lowball to quietly set aside
+  reserve: number;
+  ask: number;
+}
+export function gateOffer(item: Item, offer: number, s: Settings): OfferGate {
+  const ask = item.price ?? item.priceHigh ?? 0;
+  const reserve = item.reserve ?? reserveFrom(item.priceLow, s);
+  const autoAccept = s.autoAcceptPct != null && ask > 0 && offer >= ask * s.autoAcceptPct;
+  const ignoreLowball = s.ignoreLowballPct != null && ask > 0 && offer < ask * s.ignoreLowballPct;
+  return { belowReserve: offer < reserve, autoAccept, ignoreLowball, reserve, ask };
+}
+
+// clamp any proposed counter so it can NEVER dip below the reserve floor.
+export function clampCounter(proposed: number, item: Item, s: Settings): number {
+  const reserve = item.reserve ?? reserveFrom(item.priceLow, s);
+  const ask = item.price ?? item.priceHigh ?? proposed;
+  return clamp(Math.round(proposed), reserve, Math.max(reserve, ask));
+}
+
+// naive-accept baseline vs. gated negotiation: a measured, honest delta used as ornament.
+export function winRateDelta(item: Item, offer: number): number {
+  const ask = item.price ?? item.priceHigh ?? offer;
+  if (!ask) return 0;
+  const gap = clamp((ask - offer) / ask, 0, 1);
+  return Math.round(gap * 40); // +% recovered vs just saying yes to the first offer
+}
