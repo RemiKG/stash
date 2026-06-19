@@ -56,3 +56,67 @@ export async function searchComps(query: string, limit = 8): Promise<Comp[] | nu
     return comps;
   } catch {
     return null;
+  }
+}
+
+// Real one-tap publish via the seller's OWN OAuth token (opt-in bonus).
+export class EbayNotConnected extends Error {
+  constructor() {
+    super("eBay is not connected. Add the seller's EBAY_OAUTH_TOKEN (Sell Inventory scope) to publish for real.");
+    this.name = "EbayNotConnected";
+  }
+}
+
+export async function publishToEbay(item: Item): Promise<{ listingId: string; offerId: string }> {
+  if (!publishEnabled()) throw new EbayNotConnected();
+  const token = process.env.EBAY_OAUTH_TOKEN!;
+  const h = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "Content-Language": "en-US",
+    "X-EBAY-C-MARKETPLACE-ID": MKT(),
+  };
+  const sku = `stash-${item.id}`;
+  // 1) createOrReplaceInventoryItem
+  const inv = await fetch(`${HOST()}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`, {
+    method: "PUT",
+    headers: h,
+    body: JSON.stringify({
+      availability: { shipToLocationAvailability: { quantity: 1 } },
+      condition: "USED_GOOD",
+      product: {
+        title: item.title.slice(0, 80),
+        description: item.description || item.title,
+        aspects: Object.fromEntries(Object.entries(item.itemSpecifics || {}).map(([k, v]) => [k, [String(v)]])),
+      },
+    }),
+  });
+  if (!inv.ok && inv.status !== 204) throw new Error(`inventory ${inv.status}: ${await inv.text()}`);
+  // 2) createOffer
+  const offRes = await fetch(`${HOST()}/sell/inventory/v1/offer`, {
+    method: "POST",
+    headers: h,
+    body: JSON.stringify({
+      sku,
+      marketplaceId: MKT(),
+      format: "FIXED_PRICE",
+      availableQuantity: 1,
+      categoryId: process.env.EBAY_CATEGORY_ID || "139973",
+      listingDescription: item.description || item.title,
+      pricingSummary: { price: { value: String(item.price ?? item.priceHigh ?? 0), currency: "USD" } },
+      merchantLocationKey: process.env.EBAY_LOCATION_KEY || "stash-default",
+      listingPolicies: {
+        fulfillmentPolicyId: process.env.EBAY_FULFILLMENT_POLICY,
+        paymentPolicyId: process.env.EBAY_PAYMENT_POLICY,
+        returnPolicyId: process.env.EBAY_RETURN_POLICY,
+      },
+    }),
+  });
+  if (!offRes.ok) throw new Error(`offer ${offRes.status}: ${await offRes.text()}`);
+  const { offerId } = (await offRes.json()) as { offerId: string };
+  // 3) publishOffer
+  const pub = await fetch(`${HOST()}/sell/inventory/v1/offer/${offerId}/publish`, { method: "POST", headers: h });
+  if (!pub.ok) throw new Error(`publish ${pub.status}: ${await pub.text()}`);
+  const { listingId } = (await pub.json()) as { listingId: string };
+  return { listingId, offerId };
+}
