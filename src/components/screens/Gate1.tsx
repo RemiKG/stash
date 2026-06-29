@@ -72,3 +72,76 @@ export default function Gate1({ slug, items, listedExists }: { slug: string; ite
   const aboveBand = cur.priceHigh != null && reserve > cur.priceHigh;
 
   return (
+    <div className="screen">
+      <p className="slabel">Your nod</p>
+
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -4 }}>
+        <div style={{ width: 118 }}><Mascot pose="counter" title="the Quartermaster at the counter" /></div>
+        <div style={{ marginTop: -16 }}><Plate src={cur.plateSrc} objName={cur.plateSrc ? undefined : cur.title} caption={undefined} style={{ width: 78, height: 88 }} /></div>
+        <div style={{ height: 10, background: C.paperDeep, border: `1.4px solid ${C.ink}`, borderRadius: 2, alignSelf: "stretch", margin: "6px 0 0" }} />
+      </div>
+
+      <div className="card" style={{ padding: 18 }}>
+        <div className="row between" style={{ alignItems: "flex-start" }}>
+          <h3 style={{ fontFamily: "var(--slab)", fontWeight: 800, fontSize: 18, margin: 0, maxWidth: "76%" }}>{cur.title}</h3>
+          <span className="mono" style={{ fontWeight: 700, fontSize: 12.5 }}>{cur.confidence}% sure</span>
+        </div>
+        {cur.conditionGrade && (
+          <div style={{ marginTop: 8 }}>
+            <span className="chip">{cur.conditionGrade}</span>
+            {cur.conditionNote && <p className="muted" style={{ fontSize: 12.5, margin: "8px 0 0" }}>{cur.conditionNote}</p>}
+          </div>
+        )}
+        <hr className="hr" style={{ margin: "14px 0" }} />
+
+        <div className="row between" style={{ alignItems: "center" }}>
+          <span className="muted" style={{ fontSize: 14 }}>List at</span>
+          {editing ? (
+            <input type="number" value={price} onChange={(e) => setPrice(+e.target.value)}
+              style={{ width: 120, fontFamily: "var(--mono)", fontSize: 22, fontWeight: 700, background: C.ink, color: C.paper, border: `2px solid ${C.ink}`, borderRadius: 4, padding: "4px 8px" }} />
+          ) : (
+            <span className="tap" onClick={() => setEditing(true)}><SplitFlap value={money(price)} h={44} invert /></span>
+          )}
+          {!editing && <span className="hand faint" style={{ fontSize: 12 }}>tap to adjust</span>}
+        </div>
+
+        <div className="row between" style={{ alignItems: "center", marginTop: 14 }}>
+          <span className="muted" style={{ fontSize: 14 }}>Reserve</span>
+          {editing ? (
+            <input type="number" value={reserve} onChange={(e) => setReserve(+e.target.value)}
+              style={{ width: 110, fontFamily: "var(--mono)", fontSize: 20, fontWeight: 700, background: C.paperHi, color: C.ink, border: `2px solid ${C.ink}`, borderRadius: 4, padding: "4px 8px", borderBottom: `3px solid ${C.amber}` }} />
+          ) : (
+            <span style={{ borderBottom: `3px solid ${C.amber}`, paddingBottom: 3 }}><SplitFlap value={money(reserve)} h={40} /></span>
+          )}
+          <span style={{ width: 60 }} />
+        </div>
+        <p className="muted" style={{ fontSize: 12.5, margin: "12px 0 0", fontStyle: "italic" }}>&ldquo;I&rsquo;ll never sell below this without asking you.&rdquo;</p>
+        {cur.why && <p className="faint" style={{ fontSize: 12, margin: "6px 0 0" }}>why: {cur.why}</p>}
+        {aboveBand && <p className="muted" style={{ fontSize: 12.5, margin: "6px 0 0" }}><span style={{ borderBottom: `2px solid ${C.amber}` }}>That&rsquo;s above what buyers are paying — happy to try.</span></p>}
+        {editing && <button className="btn-ghost" style={{ marginTop: 12 }} onClick={saveEdit}>Save</button>}
+      </div>
+
+      {toast ? (
+        <div className="card" style={{ padding: 14 }}>
+          <p style={{ fontFamily: "var(--book)", fontWeight: 700, margin: 0 }}>On the shelf →</p>
+          <div className="row between" style={{ marginTop: 6 }}>
+            <span className="mono" style={{ fontSize: 14 }}>{toast}</span>
+            <button className="btn-ghost" style={{ minHeight: 34 }} onClick={() => { navigator.clipboard?.writeText(`${location.origin}/s/${slug}`); setCopied(true); }}>
+              <Copy size={16} /> {copied ? "copied" : "Copy link"}
+            </button>
+          </div>
+          <button className="btn btn-wax sm" style={{ marginTop: 12 }} onClick={next}>{i + 1 < queue.length ? `Next — ${queue.length - i - 1} more →` : "See your shop →"}</button>
+        </div>
+      ) : (
+        <>
+          <button className="btn btn-wax" disabled={busy} onClick={list}><Check size={22} /> List it</button>
+          <div className="row" style={{ gap: 12 }}>
+            <button className="btn btn-ghost grow" onClick={() => setEditing((e) => !e)}><Pencil size={18} /> Edit</button>
+            <button className="btn btn-ghost grow" disabled={busy} onClick={decline}><Cross size={18} /> Not this</button>
+          </div>
+          {queue.length > 1 && <p className="faint" style={{ fontSize: 12, textAlign: "center", margin: 0 }}>{queue.length - i - 1} more waiting</p>}
+        </>
+      )}
+    </div>
+  );
+}
