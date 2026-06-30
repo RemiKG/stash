@@ -99,3 +99,68 @@ export default function Haggle({ slug, deals }: { slug: string; deals: Deal[] })
       </div>
 
       <div className="thread">
+        {thread.messages.map((m, k) => (
+          <div key={k} className={`bubble ${m.role === "buyer" ? "buyer" : "qm"}`}>
+            {m.text}
+            <svg className="tail" viewBox="0 0 16 12" aria-hidden>
+              {m.role === "buyer"
+                ? <path d="M2 0 L2 12 L16 4 Z" fill={C.paperDeep} stroke={C.ink} strokeWidth="1.6" />
+                : <path d="M14 0 L14 12 L0 4 Z" fill={C.paperHi} stroke={C.ink} strokeWidth="1.6" />}
+            </svg>
+          </div>
+        ))}
+      </div>
+
+      {draft ? (
+        <div className="card" style={{ padding: 16 }}>
+          <div className="row between" style={{ alignItems: "center" }}>
+            <p className="slabel" style={{ margin: 0 }}>
+              {draft.move === "counter" ? "I'd counter at" : draft.move === "accept" ? "I'd take" : "I'd hold"}
+            </p>
+            {draft.amount != null && <SplitFlap value={money(draft.amount)} h={38} invert />}
+          </div>
+          <p className="muted" style={{ fontSize: 12.5, margin: "10px 0 0", fontStyle: "italic" }}>&ldquo;{draft.text}&rdquo;</p>
+        </div>
+      ) : aiDraftless ? (
+        <div className="card" style={{ padding: 16 }}>
+          <p className="muted" style={{ fontSize: 13, margin: 0 }}>
+            The drafting brain needs a Qwen key — but you can still gate the move. The reserve floor is enforced either way.
+          </p>
+          <div className="row" style={{ gap: 10, marginTop: 10, alignItems: "center" }}>
+            <span className="muted" style={{ fontSize: 13 }}>Counter at</span>
+            <input type="number" value={manual} onChange={(e) => setManual(+e.target.value)}
+              style={{ width: 110, fontFamily: "var(--mono)", fontWeight: 700, fontSize: 18, background: C.ink, color: C.paper, border: `2px solid ${C.ink}`, borderRadius: 4, padding: "4px 8px" }} />
+          </div>
+        </div>
+      ) : (
+        <p className="hand faint" style={{ fontSize: 14 }}>drafting a reply…</p>
+      )}
+
+      <div>
+        <p className="slabel">Never below your floor</p>
+        <div style={{ position: "relative", height: 34, marginTop: 8 }}>
+          <div className="slider" style={{ width: "100%" }}>
+            <div className="track" />
+            <div className="fill" style={{ width: pos(meta.reserve) }} />
+            <div className="knob" style={{ left: pos(counterAmt) }} />
+          </div>
+          <div style={{ position: "absolute", left: pos(meta.reserve), top: -8, transform: "translateX(-50%)", textAlign: "center" }}>
+            <div className="mono muted" style={{ fontSize: 10 }}>{money(meta.reserve)} floor</div>
+            <svg width="16" height="20" viewBox="0 0 16 20"><path d="M8 20 L8 6 M2 6 L14 6 L8 -2 Z" fill={C.ink} stroke={C.ink} /></svg>
+          </div>
+          <span className="mono" style={{ position: "absolute", right: 0, top: 6, fontWeight: 700 }}>{money(counterAmt)}</span>
+        </div>
+      </div>
+
+      <button className="btn btn-wax" disabled={busy} onClick={() => move("counter")}>Counter {money(counterAmt)}</button>
+      <div className="row" style={{ gap: 12 }}>
+        <button className="btn btn-ghost grow" disabled={busy || meta.lastOffer == null} onClick={() => move("accept")}>Accept {money(meta.lastOffer)}</button>
+        <button className="btn btn-ghost grow" disabled={busy} onClick={() => move("decline")}>Decline</button>
+      </div>
+      {meta.winRate > 0 && (
+        <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>win-rate vs. just-say-yes: <span className="mono" style={{ fontWeight: 700, color: C.ink }}>+{meta.winRate}%</span></p>
+      )}
+      {deals.length > 1 && <p className="faint" style={{ fontSize: 12, textAlign: "center", margin: 0 }}>{deals.length - i - 1} more at the counter</p>}
+    </div>
+  );
+}
