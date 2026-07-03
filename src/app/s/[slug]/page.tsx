@@ -60,3 +60,73 @@ export default async function ShopPage({
             <span className="stat"><SplitFlap value={money(view.totals.found)} h={44} invert /><span className="lab">found</span></span>
           )}
           <span className="stat"><SplitFlap value={String(shelf.length)} h={44} /><span className="lab">items</span></span>
+          <div style={{ width: 108, flex: "none", alignSelf: "flex-start", marginTop: -18 }}>
+            <Mascot pose="wave" title="the Quartermaster" />
+          </div>
+        </div>
+      </header>
+
+      {view.shop.isDemo && (
+        <div style={{ marginTop: 6 }}><span className="demo-banner">🐿 Demo shop — a curated pile. Numbers are illustrative; the real path is your own upload.</span></div>
+      )}
+      {owner && (
+        <div style={{ marginTop: 10 }}><ShopOwnerTools slug={slug} item={featured} /></div>
+      )}
+
+      <hr className="hr" style={{ margin: "14px 0 0" }} />
+
+      <div className="shop-grid">
+        <div className="col" style={{ gap: 18 }}>
+          {featured ? (
+            <>
+              <Plate
+                src={featured.plateSrc}
+                objName={featured.plateSrc ? undefined : featured.title}
+                caption={featured.title}
+                price={money(featured.price)}
+                sold={featured.status === "sold"}
+                soldR={64}
+                style={{ height: 300 }}
+              />
+              {featured.status === "listed" && <OfferBox slug={slug} itemId={featured.id} />}
+            </>
+          ) : (
+            <p className="muted">The shelves are still filling.</p>
+          )}
+        </div>
+
+        <div className="col" style={{ gap: 0 }}>
+          {rows.map((row, ri) => (
+            <div key={ri}>
+              <div className="shelf">
+                {row.map((it) => (
+                  <Link key={it.id} href={`/s/${slug}?item=${it.id}`} style={{ textDecoration: "none" }}>
+                    <Plate
+                      src={it.plateSrc}
+                      objName={it.plateSrc ? undefined : it.title}
+                      caption={it.title}
+                      price={money(it.price)}
+                      sold={it.status === "sold"}
+                      soldR={38}
+                      style={{ height: 210 }}
+                    />
+                  </Link>
+                ))}
+              </div>
+              <div className="shelf-plank" />
+            </div>
+          ))}
+          {!rest.length && <p className="faint">More on the shelf soon.</p>}
+        </div>
+      </div>
+
+      <hr className="hr" style={{ marginTop: 10 }} />
+      <div className="row between wrap" style={{ padding: "18px 0 0", gap: 12 }}>
+        <span className="muted" style={{ fontSize: 15 }}>Run by a squirrel on Qwen Cloud. Every closet is a shop that never opened.</span>
+        <span className="muted" style={{ fontSize: 14 }}>
+          MIT · open source · <Link href="/intake" style={{ color: "inherit" }}>make your own shop →</Link>
+        </span>
+      </div>
+    </main>
+  );
+}
