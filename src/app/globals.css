@@ -434,3 +434,202 @@ button { font-family: inherit; }
 .awning-seg.amber { background: var(--amber); }
 .awning-seg.cream { background: var(--paper-hi); }
 
+.shop-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 40px);
+  padding: 34px 0 8px;
+  flex-wrap: wrap;
+  position: relative;
+}
+.shop-stats {
+  margin-left: auto;
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 40px;
+  padding-top: 22px;
+}
+.shelf {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+.shelf-plank {
+  height: 12px;
+  background: var(--paper-deep);
+  border: 1.6px solid var(--ink);
+  border-radius: 2px;
+  margin: 6px 0 22px;
+}
+@media (max-width: 860px) {
+  .shop-grid { grid-template-columns: 1fr; }
+  .shelf { grid-template-columns: repeat(2, 1fr); }
+  .shop-stats { margin-left: 0; }
+}
+@media (max-width: 540px) {
+  .shelf { grid-template-columns: 1fr; }
+}
+
+/* ============================================================================
+   Catalogue plate — the halftone object in a double keyline frame + slug.
+   The <img> plate is generated from the user's real photo (duotone halftone).
+   ============================================================================ */
+.plate {
+  position: relative;
+  background: var(--paper-hi);
+  border: 2px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+.plate-inner-rule {
+  position: absolute;
+  inset: 4px;
+  border: 0.8px solid var(--ink);
+  pointer-events: none;
+}
+.plate-corners::before,
+.plate-corners::after { content: none; }
+.plate-art {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  padding: 8px;
+}
+.plate-art img,
+.plate-art svg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.plate-slug {
+  display: flex;
+  align-items: center;
+  border-top: 0.8px solid var(--ink);
+  background: var(--paper-deep);
+  font-family: var(--book);
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  height: 22px;
+  margin: 0 4px 4px;
+}
+.plate-slug .cap {
+  padding: 0 8px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plate-slug .price {
+  padding: 0 8px;
+  border-left: 0.8px solid var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.plate .corner {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 0;
+  z-index: 2;
+}
+.plate .corner path { stroke: var(--ink); }
+
+/* ============================================================================
+   Haggle bubbles.
+   ============================================================================ */
+.bubble {
+  position: relative;
+  max-width: 76%;
+  padding: 12px 16px;
+  border: 1.7px solid var(--ink);
+  border-radius: 14px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.bubble.buyer {
+  background: var(--paper-deep);
+  align-self: flex-start;
+}
+.bubble.qm {
+  background: var(--paper-hi);
+  align-self: flex-end;
+}
+.bubble.qm::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 1.3px solid var(--amber);
+  transform: translate(var(--riso-x), var(--riso-y));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.bubble .tail {
+  position: absolute;
+  width: 16px;
+  height: 12px;
+}
+.bubble.buyer .tail { left: 14px; top: 100%; }
+.bubble.qm .tail { right: 14px; top: 100%; }
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.mono-money { font-family: var(--mono); font-weight: 700; }
+
+/* ============================================================================
+   Settings — brass levers, brass sliders, padlocks.
+   ============================================================================ */
+.srow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+}
+.srow .labels { flex: 1; }
+.srow .labels .l {
+  font-family: var(--book);
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.srow .labels .s {
+  font-size: 12px;
+  color: var(--ink-70);
+  margin-top: 2px;
+}
+
+.lever {
+  width: 46px;
+  height: 26px;
+  border-radius: 13px;
+  border: 1.7px solid var(--ink);
+  background: var(--paper-deep);
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+}
+.lever.on { background: var(--amber); }
+.lever .knob {
+  position: absolute;
+  top: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--paper-hi);
