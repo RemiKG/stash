@@ -54,3 +54,41 @@ export async function ensureDemo(): Promise<string> {
 export async function buildDemo(): Promise<string> {
   await deleteShop(DEMO_SLUG);
   const now = Date.now();
+  await saveShop({ slug: DEMO_SLUG, name: "The Demo Drawer", blurb: "one real closet, opened.", createdAt: now, isDemo: true, claimed: false });
+  await saveSettings(DEMO_SLUG, { ...DEFAULT_SETTINGS });
+
+  let t = now - 14 * 3600_000;
+  for (const s of SOLD) { await upsertItem(mk(s, "sold", t)); t += 900_000; }
+  for (const s of LISTED) { await upsertItem(mk(s, "listed", t)); t += 900_000; }
+
+  // Canon gets comps + a live buyer offer waiting at the counter (Screen F canon).
+  await upsertItem({ ...mk(LISTED[0], "listed", now - 3600_000), comps: [
+    { title: "Canon AE-1 body, working", price: 88, source: "eBay active" },
+    { title: "Canon AE-1 w/ 50mm", price: 95, source: "eBay active" },
+    { title: "Canon AE-1 Program, mint", price: 110, source: "eBay active" },
+    { title: "Canon AE-1 as-is", price: 79, source: "eBay active" },
+  ] });
+
+  const thread: Thread = {
+    id: "demo-th-canon", itemId: "demo-cam", shopSlug: DEMO_SLUG, buyer: "quiet_otter_42",
+    status: "open", rounds: 0, createdAt: now - 1800_000,
+    messages: [{ role: "buyer", text: "Still available? Take $70?", ts: now - 1800_000, amount: 70 }],
+    draft: null,
+  };
+  await upsertThread(thread);
+
+  // a curated, honest daybook (append-only)
+  const L: LedgerEntry[] = [
+    { ts: now - 13.9 * 3600_000, actor: "squirrel", action: "identified", item: "92% sure", itemId: "demo-cam", amount: null, kind: "id" },
+    { ts: now - 13.8 * 3600_000, actor: "squirrel", action: "appraised", item: "band $88–102", itemId: "demo-cam", amount: null, kind: "price" },
+    { ts: now - 13.7 * 3600_000, actor: "squirrel", action: "composed", item: "Canon AE-1", itemId: "demo-cam", amount: null, kind: "other" },
+    { ts: now - 13.6 * 3600_000, actor: "you", action: "approved · list", item: "Canon AE-1", itemId: "demo-cam", amount: 95, kind: "sale" },
+    ...SOLD.map((s, i): LedgerEntry => ({ ts: now - (10 - i) * 3600_000, actor: "you", action: "approved · list", item: s.title, itemId: `demo-${s.id}`, amount: s.price, kind: "sale" })),
+    ...SOLD.map((s, i): LedgerEntry => ({ ts: now - (6 - i * 0.5) * 3600_000, actor: "squirrel", action: "sold", item: s.title, itemId: `demo-${s.id}`, amount: s.sold ?? s.price, kind: "sale" })),
+    { ts: now - 1800_000, actor: "buyer", action: "offered", item: "Canon AE-1", itemId: "demo-cam", amount: 70, kind: "message", meta: { buyer: "quiet_otter_42" } },
+  ];
+  L.sort((a, b) => a.ts - b.ts);
+  for (const e of L) await appendLedger(DEMO_SLUG, e);
+
+  return DEMO_SLUG;
+}
