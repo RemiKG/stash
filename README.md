@@ -83,3 +83,113 @@ No secret is hardcoded or committed. See `.env.example`.
 The **architecture diagram and the UI are the same left-to-right picture**:
 
 ```
+  Add ──► Identify ──► Appraise ──► Compose ──► Publish ──► Negotiate ──► Fulfill
+ (photo)  qwen3-vl    embed+comps   qwen3.7     Stash shop  qwen3.7-max   SOLD
+                       + qwen3.7      -plus       (real URL)  (gated ×)   (gated)
+   └───────────── deterministic policy layer + append-only ledger ─────────────┘
+```
+
+- **Frontend** — Next.js 15 App Router, React 19, bespoke CSS "print system"
+  (`src/app/globals.css`) + hand-authored SVG art ported from the design kit
+  (`src/lib/art/*`, `src/components/art/*`). Two surfaces: the phone-first
+  **owner app** (`src/app/(owner)/*`) and the responsive public **shop**
+  (`src/app/s/[slug]`).
+- **Backend** — Next.js Route Handlers (`src/app/api/*`, Node runtime). Services:
+  identify / appraise / compose / negotiate (`src/lib/ai/engine.ts`), the eBay
+  integration (`src/lib/ebay.ts`), the deterministic policy layer
+  (`src/lib/policy.ts`), filesystem persistence + the NDJSON ledger
+  (`src/lib/store.ts`), and image scrub (`src/lib/image.ts` server +
+  `src/lib/scrub.client.ts` on-device).
+- **Storage** — a filesystem store rooted at `STASH_DATA_DIR` (default `.data/`):
+  `shops/<slug>/{shop,items,threads,settings}.json`, `ledger.ndjson`, and
+  `blobs/` for scrubbed photos + generated plates. Persists on any host with a
+  disk (local, Docker, Alibaba ECS).
+
+---
+
+## Getting started
+
+```bash
+npm install
+cp .env.example .env.local     # optional — fill in any keys you have
+npm run dev                    # http://localhost:3000
+```
+
+Open the app, tap **Point at your pile**, drop in a photo, and watch the loop.
+Or open the labelled demo at **`/s/demo-drawer`**.
+
+Production:
+
+```bash
+npm run build && npm start
+```
+
+Docker (the design's Alibaba Cloud / self-host target — persistent disk):
+
+```bash
+docker build -t stash .
+docker run -d -p 80:3000 -e DASHSCOPE_API_KEY=sk-... \
+  -e STASH_DATA_DIR=/data -v /srv/stash-data:/data stash
+```
+
+### Environment
+
+| Var | Purpose |
+|---|---|
+| `DASHSCOPE_API_KEY` | Qwen Cloud key — the intended brain. Activates the real path. |
+| `QWEN_BASE_URL`, `QWEN_VL_MODEL`, `QWEN_TEXT_MODEL`, `QWEN_HAGGLE_MODEL`, `QWEN_EMBED_MODEL` | Qwen endpoint + model ids (defaults match the design). |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Dev/verification fallback provider (real calls). |
+| `STASH_AI_PROVIDER` | Force `qwen` \| `anthropic` \| `none`. Default: auto. |
+| `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `EBAY_MARKETPLACE_ID`, `EBAY_ENV` | Live comps via the Browse API. |
+| `EBAY_OAUTH_TOKEN` (+ policy ids) | Opt-in real one-tap eBay publish. |
+| `STASH_DATA_DIR` | Where shops/ledger/photos persist (default `./.data`). |
+
+`GET /api/health` reports which providers are live.
+
+---
+
+## Project structure
+
+```
+src/
+  app/
+    (owner)/            # phone-first owner app: home, intake, bench, nod, haggle, fulfill, ledger, settings
+    s/[slug]/           # the public shop (the money shot)
+    api/                # identify · appraise · compose · answer · gate · offer · draft · move · fulfill · publish-ebay · ledger · settings · intake · seed · blob · health
+  components/
+    art/                # Mascot, Wordmark, TailMark, Plate, SplitFlap, WaxStamp, Icons, PrintDefs
+    screens/            # Bench, Gate1, Haggle, Fulfill, Ledger, StandingOrders, OfferBox, ShopOwnerTools
+    ui/                 # AppBar, StatusBar, Stat
+  lib/
+    ai/                 # client (OpenAI-compatible seam) · prompts (the 4 Skills) · engine
+    art/                # kit · mascot · mark (the print system, ported to TS)
+    ebay · policy · store · shop · image · scrub.client · seed · session · types · config
+public/
+    pico/               # pico.js face detector (MIT) + cascade — on-device face scrub
+    icon.svg, icon-*.png, manifest.webmanifest, sw.js   # PWA
+```
+
+---
+
+## Honest limitations
+
+- **The agent will sometimes be wrong about what a thing is.** That's exactly why
+  Gate 1 exists — nothing goes public until you nod.
+- **Pricing is a reasoned band, not an oracle** — grounded in live active comps
+  (when eBay is connected) + model reasoning, shown with a confidence score.
+- **No auto-post beyond your Stash shop and eBay** — everywhere else is an honest
+  copy-paste pack.
+- **Recalled / restricted items are set aside, not listed** — by the deterministic
+  classifier, with a calm note (never a red alarm).
+
+---
+
+## Credits & licence
+
+MIT. Fonts are self-hosted OFL faces standing in for the design's local faces
+(Rokkitt ≈ Rockwell, Gelasio ≈ Bookman/Georgia, Inconsolata ≈ Consolas, Patrick
+Hand ≈ Segoe Print). On-device face detection uses
+[pico.js](https://github.com/nenadmarkus/picojs) (MIT). All other art is
+hand-authored vector — deterministic engraving, not diffusion.
+
+**Stash. Point at your pile. Watch it sell.**
