@@ -60,7 +60,9 @@ export const QWEN_BASE_URL_PUBLIC =
   process.env.QWEN_BASE_URL || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 
 export function baseUrlFromReq(req: Request): string {
-  const env = process.env.NEXT_PUBLIC_STASH_BASE_URL;
+  // STASH_BASE_URL is a runtime (non-inlined) override for reverse-proxied or
+  // custom-domain deploys; NEXT_PUBLIC_STASH_BASE_URL stays supported for parity.
+  const env = process.env.STASH_BASE_URL || process.env.NEXT_PUBLIC_STASH_BASE_URL;
   if (env) return env.replace(/\/$/, "");
   try {
     const u = new URL(req.url);
