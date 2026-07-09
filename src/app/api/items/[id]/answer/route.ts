@@ -8,7 +8,7 @@ import { currentSlug } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 // the ambiguity branch: the owner answers the one targeted question -> re-run ID.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

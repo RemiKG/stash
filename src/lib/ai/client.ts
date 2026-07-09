@@ -20,7 +20,7 @@ export function getClient(): { client: OpenAI; cfg: AIConfig } {
     baseURL: cfg.baseURL,
     // Anthropic's OpenAI-compat requires this header to be tolerant of the SDK;
     // it is harmless for Qwen. Timeouts keep the UI honest under a slow model.
-    timeout: 60_000,
+    timeout: 120_000,
     maxRetries: 1,
   });
   return { client, cfg };
@@ -36,11 +36,15 @@ export async function chat(
 ): Promise<string> {
   const { client, cfg } = getClient();
   const model = opts.model || cfg.models.text;
+  // Every chat here sits on an interactive path (bench, counter, haggle) —
+  // Qwen's default deep-thinking mode would add 40–80s, so switch it off.
+  const extra = cfg.provider === "qwen" ? { enable_thinking: false } : {};
   const res = await client.chat.completions.create({
     model,
     messages,
     max_tokens: opts.maxTokens ?? 1024,
     temperature: opts.temperature ?? 0.4,
+    ...extra,
   });
   return res.choices?.[0]?.message?.content?.trim() || "";
 }

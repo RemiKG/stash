@@ -41,6 +41,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const price = typeof body.price === "number" && body.price > 0 ? Math.round(body.price) : item.price;
   const reserve = typeof body.reserve === "number" && body.reserve > 0 ? Math.round(body.reserve) : item.reserve;
+  // never let an unidentified / unappraised item onto the shelf
+  if (!item.title || !price) {
+    return NextResponse.json(
+      { error: "not_ready", message: "This one hasn't been across the bench yet — identify and appraise it before listing." },
+      { status: 409 }
+    );
+  }
   const patched = await patchItem(slug, id, { status: "listed", listedAt: Date.now(), price, reserve });
   await appendLedger(slug, { ts: Date.now(), actor: "you", action: "approved · list", item: item.title, itemId: id, amount: price ?? null, kind: "sale" });
   return NextResponse.json({ item: patched, shopUrl });

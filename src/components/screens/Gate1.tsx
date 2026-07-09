@@ -20,6 +20,7 @@ export default function Gate1({ slug, items, listedExists }: { slug: string; ite
   const [reserve, setReserve] = useState<number>(items[0]?.reserve ?? 0);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string>("");
+  const [err, setErr] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
   const cur = queue[i];
@@ -37,16 +38,21 @@ export default function Gate1({ slug, items, listedExists }: { slug: string; ite
   async function list() {
     if (busy || !cur) return;
     setBusy(true);
+    setErr("");
     try {
       const res = await post<{ shopUrl: string }>(`/api/items/${cur.id}/gate`, { slug, action: "list", price, reserve });
       const url = res.shopUrl?.replace(/^https?:\/\//, "") || `stash.shop/${slug}`;
       setToast(url);
+    } catch (e) {
+      setErr((e as Error).message || "Couldn't list it — try again.");
     } finally { setBusy(false); }
   }
   async function decline() {
     if (busy || !cur) return;
     setBusy(true);
+    setErr("");
     try { await post(`/api/items/${cur.id}/gate`, { slug, action: "decline" }); next(); }
+    catch (e) { setErr((e as Error).message || "Couldn't set it aside — try again."); }
     finally { setBusy(false); }
   }
   async function saveEdit() {
@@ -135,6 +141,7 @@ export default function Gate1({ slug, items, listedExists }: { slug: string; ite
       ) : (
         <>
           <button className="btn btn-wax" disabled={busy} onClick={list}><Check size={22} /> List it</button>
+          {err && <p style={{ fontSize: 13, textAlign: "center", margin: 0 }}><span style={{ borderBottom: `2px solid ${C.amber}` }}>{err}</span></p>}
           <div className="row" style={{ gap: 12 }}>
             <button className="btn btn-ghost grow" onClick={() => setEditing((e) => !e)}><Pencil size={18} /> Edit</button>
             <button className="btn btn-ghost grow" disabled={busy} onClick={decline}><Cross size={18} /> Not this</button>

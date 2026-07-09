@@ -5,7 +5,7 @@ import { currentSlug } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 // The opt-in flagship: a REAL live eBay listing via the seller's OWN OAuth.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
