@@ -1,6 +1,7 @@
 import Bench from "@/components/screens/Bench";
 import { currentSlug } from "@/lib/session";
 import { getItems } from "@/lib/store";
+import { isStatelessMirror, primaryUrl } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +12,5 @@ export default async function BenchPage({ searchParams }: { searchParams: Promis
   const pending = items
     .filter((i) => ["draft", "identifying", "appraised"].includes(i.status))
     .sort((a, b) => a.createdAt - b.createdAt);
-  return <Bench slug={slug || ""} initial={pending} />;
+  return <Bench slug={slug || ""} initial={pending} mirror={isStatelessMirror()} primary={primaryUrl()} />;
 }

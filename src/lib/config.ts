@@ -59,6 +59,15 @@ export const QWEN_STACK = "qwen3-vl-plus · text-embedding-v4 · qwen3.7-plus ·
 export const QWEN_BASE_URL_PUBLIC =
   process.env.QWEN_BASE_URL || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 
+// Serverless mirror seam: on Vercel each function instance has its own disk,
+// so a fresh upload can land on one instance and be invisible to the next.
+// The primary deployment (real disk) runs the full stateful path; the mirror
+// says so honestly instead of losing items in silence.
+export const isStatelessMirror = () =>
+  process.env.STASH_STATELESS === "1" || (!!process.env.VERCEL && process.env.STASH_STATELESS !== "0");
+export const primaryUrl = () =>
+  (process.env.STASH_PRIMARY_URL || "http://47.84.113.80:3001").replace(/\/$/, "");
+
 export function baseUrlFromReq(req: Request): string {
   // STASH_BASE_URL is a runtime (non-inlined) override for reverse-proxied or
   // custom-domain deploys; NEXT_PUBLIC_STASH_BASE_URL stays supported for parity.

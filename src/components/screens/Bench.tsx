@@ -11,9 +11,9 @@ import { band, money } from "@/lib/utils";
 import { C } from "@/lib/art/kit";
 import type { Item } from "@/lib/types";
 
-type Step = "id" | "question" | "prohibited" | "appraise" | "compose" | "done" | "ai_error" | "error";
+type Step = "id" | "question" | "prohibited" | "appraise" | "compose" | "done" | "ai_error" | "mirror" | "error";
 
-export default function Bench({ slug, initial }: { slug: string; initial: Item[] }) {
+export default function Bench({ slug, initial, mirror = false, primary = "" }: { slug: string; initial: Item[]; mirror?: boolean; primary?: string }) {
   const router = useRouter();
   const [items, setItems] = useState<Item[]>(initial);
   const itemsRef = useRef(initial);
@@ -34,7 +34,13 @@ export default function Bench({ slug, initial }: { slug: string; initial: Item[]
     ranRef.current = true;
     (async () => {
       const list = itemsRef.current;
-      if (!list.length) { router.push("/nod"); return; }
+      if (!list.length) {
+        // On the stateless mirror a fresh upload can land on another serverless
+        // instance — say so instead of silently bouncing to an empty counter.
+        if (mirror) { setStep("mirror"); return; }
+        router.push("/nod");
+        return;
+      }
       try {
         for (let i = 0; i < list.length; i++) {
           let it = itemsRef.current[i];
@@ -58,6 +64,7 @@ export default function Bench({ slug, initial }: { slug: string; initial: Item[]
       } catch (e) {
         const err = e as { status?: number; message?: string };
         if (err.status === 503) { setStep("ai_error"); setMsg(err.message || "The eye needs a key."); }
+        else if (err.status === 404 && mirror) { setStep("mirror"); }
         else { setStep("error"); setMsg(err.message || "Something jammed on the bench."); }
       }
     })();
@@ -109,6 +116,31 @@ export default function Bench({ slug, initial }: { slug: string; initial: Item[]
         </div>
         <a className="btn btn-wax" href="/s/demo-drawer">Watch the demo shop instead →</a>
         <a className="btn btn-ghost" href="/">Back home</a>
+      </div>
+    );
+  }
+
+  if (step === "mirror") {
+    return (
+      <div className="screen">
+        <p className="slabel">On the bench</p>
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ display: "flex", gap: 12 }}>
+            <Mascot pose="appraise" title="the Quartermaster" />
+            <div>
+              <h3 style={{ fontFamily: "var(--book)", fontWeight: 700, fontSize: 17, margin: 0 }}>This hosted mirror can&rsquo;t hold your item.</h3>
+              <p className="muted" style={{ fontSize: 13.5 }}>
+                The mirror runs on serverless instances that don&rsquo;t share a disk, so a fresh
+                upload can land on one instance and be invisible to the next. Nothing is wrong with
+                your photo — the full path (bench → price band → your own shop link) runs on the
+                stateful deployment.
+              </p>
+            </div>
+          </div>
+          <style>{`.card svg { width: 90px; height: auto; }`}</style>
+        </div>
+        {primary && <a className="btn btn-wax" href={`${primary}/intake`}>Run it on the stateful deployment →</a>}
+        <a className="btn btn-ghost" href="/s/demo-drawer">Watch the demo shop instead →</a>
       </div>
     );
   }

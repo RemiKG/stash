@@ -788,6 +788,17 @@ button { font-family: inherit; }
   gap: 8px;
   align-items: center;
 }
+.mirror-note {
+  background: var(--paper-deep);
+  border-bottom: 1.4px solid var(--ink);
+  padding: 6px 14px;
+  font-family: var(--book);
+  font-weight: 700;
+  font-size: 12.5px;
+  text-align: center;
+  color: var(--ink-70);
+}
+.mirror-note a { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

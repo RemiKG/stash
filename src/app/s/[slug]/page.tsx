@@ -11,6 +11,7 @@ import { getSettings } from "@/lib/store";
 import { ensureDemo, DEMO_SLUG } from "@/lib/seed";
 import { isOwner } from "@/lib/session";
 import { money } from "@/lib/utils";
+import { isStatelessMirror, primaryUrl } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,12 @@ export default async function ShopPage({
   if (slug === DEMO_SLUG) await ensureDemo();
 
   const view = await shopView(slug);
-  if (!view) notFound();
+  if (!view) {
+    // On the stateless mirror a shop can live on another serverless instance —
+    // point at the stateful deployment instead of a dead 404.
+    if (isStatelessMirror() && slug !== DEMO_SLUG) return <MirrorMiss slug={slug} />;
+    notFound();
+  }
   const settings = await getSettings(slug);
   const owner = await isOwner(slug);
 
@@ -126,6 +132,32 @@ export default async function ShopPage({
         <span className="muted" style={{ fontSize: 14 }}>
           MIT · open source · <Link href="/intake" style={{ color: "inherit" }}>make your own shop →</Link>
         </span>
+      </div>
+    </main>
+  );
+}
+
+function MirrorMiss({ slug }: { slug: string }) {
+  const primary = primaryUrl();
+  const pretty = primary.replace(/^https?:\/\//, "");
+  return (
+    <main className="shopfront" style={{ maxWidth: 620 }}>
+      <div className="awning-bar" />
+      <header className="shop-header" style={{ marginTop: 14 }}>
+        <Wordmark size={52} />
+      </header>
+      <div className="card" style={{ padding: 20, marginTop: 18 }}>
+        <h2 style={{ fontFamily: "var(--book)", fontWeight: 700, fontSize: 19, margin: 0 }}>This shop isn&rsquo;t on this mirror.</h2>
+        <p className="muted" style={{ fontSize: 14, margin: "10px 0 0" }}>
+          The hosted mirror is stateless — its serverless instances don&rsquo;t share a disk, so
+          fresh shops don&rsquo;t reliably persist here. Shops live on the stateful deployment:
+        </p>
+        <p className="mono" style={{ fontSize: 14, margin: "10px 0 0" }}>
+          <a href={`${primary}/s/${slug}`} style={{ color: "inherit" }}>{pretty}/s/{slug}</a>
+        </p>
+        <p className="muted" style={{ fontSize: 13, margin: "14px 0 0" }}>
+          <Link href={`/s/${DEMO_SLUG}`} style={{ color: "inherit" }}>Or browse the demo shop →</Link>
+        </p>
       </div>
     </main>
   );
